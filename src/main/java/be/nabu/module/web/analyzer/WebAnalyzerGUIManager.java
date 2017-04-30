@@ -79,6 +79,7 @@ public class WebAnalyzerGUIManager extends BasePortableGUIManager<WebAnalyzer, B
 		TitledPane pane = new TitledPane();
 		TextField title = new TextField();
 		pane.textProperty().bind(title.textProperty());
+		title.setText(analysis.getTitle());
 		title.textProperty().addListener(new ChangeListener<String>() {
 			@Override
 			public void changed(ObservableValue<? extends String> arg0, String oldValue, String newValue) {
@@ -86,7 +87,6 @@ public class WebAnalyzerGUIManager extends BasePortableGUIManager<WebAnalyzer, B
 				MainController.getInstance().setChanged();
 			}
 		});
-		title.setText(analysis.getTitle());
 		
 		ComboBox<AnalysisTiming> timing = new ComboBox<AnalysisTiming>();
 		timing.getItems().add(null);
@@ -120,9 +120,8 @@ public class WebAnalyzerGUIManager extends BasePortableGUIManager<WebAnalyzer, B
 					artifact.getConfig().getAnalyses().set(index - 1, analysis);
 					artifact.getConfig().getAnalyses().set(index, other);
 					
-					TitledPane otherPane = accordion.getPanes().get(index - 1);
-					accordion.getPanes().set(index - 1, pane);
-					accordion.getPanes().set(index, otherPane);
+					accordion.getPanes().remove(pane);
+					accordion.getPanes().add(index - 1, pane);
 					
 					MainController.getInstance().setChanged();
 				}
@@ -137,10 +136,9 @@ public class WebAnalyzerGUIManager extends BasePortableGUIManager<WebAnalyzer, B
 					WebAnalysis other = artifact.getConfig().getAnalyses().get(index + 1);
 					artifact.getConfig().getAnalyses().set(index + 1, analysis);
 					artifact.getConfig().getAnalyses().set(index, other);
-					
-					TitledPane otherPane = accordion.getPanes().get(index + 1);
-					accordion.getPanes().set(index + 1, pane);
-					accordion.getPanes().set(index, otherPane);
+
+					accordion.getPanes().remove(pane);
+					accordion.getPanes().add(index + 1, pane);
 
 					MainController.getInstance().setChanged();
 				}
@@ -166,11 +164,18 @@ public class WebAnalyzerGUIManager extends BasePortableGUIManager<WebAnalyzer, B
 		
 		AceEditor editor = new AceEditor();
 		editor.setContent("text/x-glue", analysis.getScript() == null ? "" : analysis.getScript());
+		
 		editor.subscribe(AceEditor.CHANGE, new EventHandler<Event>() {
 			@Override
 			public void handle(Event arg0) {
-				analysis.setScript(editor.getContent());
-				MainController.getInstance().setChanged();
+				String content = editor.getContent();
+				if (content == null) {
+					content = "";
+				}
+				if (!content.equals(analysis.getScript())) {
+					analysis.setScript(content);
+					MainController.getInstance().setChanged();
+				}
 			}
 		});
 		editor.subscribe(AceEditor.CLOSE, new EventHandler<Event>() {
