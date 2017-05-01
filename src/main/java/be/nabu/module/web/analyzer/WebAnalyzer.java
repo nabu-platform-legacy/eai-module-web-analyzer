@@ -78,7 +78,7 @@ public class WebAnalyzer extends JAXBArtifact<WebAnalyzerConfiguration> implemen
 				parserProvider = new GlueParserProvider(serviceMethodProvider);
 			}
 			else {
-				StaticJavaMethodProvider metricsMethodProvider = new StaticJavaMethodProvider(new AnalyzerMetricsMethods(getConfig().getMetricsDatabase()));
+				StaticJavaMethodProvider metricsMethodProvider = new StaticJavaMethodProvider(new MetricsMethods(getConfig().getMetricsDatabase(), getId()));
 				parserProvider = new GlueParserProvider(serviceMethodProvider, metricsMethodProvider);
 			}
 			String environmentName = path;
