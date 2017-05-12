@@ -253,4 +253,8 @@ public class WebAnalyzerGUIManager extends BasePortableGUIManager<WebAnalyzer, B
 		guiInstance.setArtifact(instance);
 	}
 
+	@Override
+	public String getCategory() {
+		return "Web";
+	}
 }
