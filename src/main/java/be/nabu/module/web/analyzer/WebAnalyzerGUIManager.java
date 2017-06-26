@@ -22,8 +22,10 @@ import javafx.scene.layout.VBox;
 import be.nabu.eai.developer.MainController;
 import be.nabu.eai.developer.managers.base.BaseArtifactGUIInstance;
 import be.nabu.eai.developer.managers.base.BasePortableGUIManager;
+import be.nabu.eai.developer.managers.util.SimplePropertyUpdater;
 import be.nabu.eai.developer.util.Confirm;
 import be.nabu.eai.developer.util.Confirm.ConfirmType;
+import be.nabu.eai.developer.util.EAIDeveloperUtils;
 import be.nabu.eai.repository.api.Entry;
 import be.nabu.eai.repository.api.ListableSinkProviderArtifact;
 import be.nabu.eai.repository.api.ResourceEntry;
@@ -32,7 +34,6 @@ import be.nabu.jfx.control.ace.AceEditor;
 import be.nabu.libs.artifacts.api.Artifact;
 import be.nabu.libs.property.api.Property;
 import be.nabu.libs.property.api.Value;
-import be.nabu.module.web.analyzer.WebAnalysis.AnalysisTiming;
 
 public class WebAnalyzerGUIManager extends BasePortableGUIManager<WebAnalyzer, BaseArtifactGUIInstance<WebAnalyzer>> {
 
@@ -51,25 +52,6 @@ public class WebAnalyzerGUIManager extends BasePortableGUIManager<WebAnalyzer, B
 		VBox vbox = new VBox();
 		HBox box = new HBox();
 		Button button = new Button("Add Analysis");
-		TextField metrics = new TextField();
-		metrics.textProperty().addListener(new ChangeListener<String>() {
-			@Override
-			public void changed(ObservableValue<? extends String> arg0, String arg1, String arg2) {
-				if (arg2 != null && !arg2.isEmpty()) {
-					Artifact resolve = artifact.getRepository().resolve(arg2);
-					if (resolve instanceof ListableSinkProviderArtifact) {
-						if (!resolve.equals(artifact.getConfig().getMetricsDatabase())) {
-							artifact.getConfig().setMetricsDatabase((ListableSinkProviderArtifact) resolve);
-							MainController.getInstance().setChanged();
-						}
-					}
-				}
-				else if (artifact.getConfig().getMetricsDatabase() != null) {
-					artifact.getConfig().setMetricsDatabase(null);
-					MainController.getInstance().setChanged();
-				}
-			}
-		});
 		button.addEventHandler(ActionEvent.ANY, new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent arg0) {
@@ -82,10 +64,36 @@ public class WebAnalyzerGUIManager extends BasePortableGUIManager<WebAnalyzer, B
 			}
 		});
 		box.getChildren().add(button);
+
+		SimplePropertyUpdater createUpdater = EAIDeveloperUtils.createUpdater(artifact.getConfig(), null, "analyses");
 		
-		HBox metricsBox = new HBox();
-		metricsBox.getChildren().addAll(new Label("Metrics Database: "), metrics);
-		vbox.getChildren().addAll(metricsBox, box, accordion);
+		AnchorPane propertiesPane = new AnchorPane();
+		MainController.getInstance().showProperties(createUpdater, propertiesPane, true);
+		vbox.getChildren().addAll(propertiesPane, box, accordion);
+		
+//		TextField metrics = new TextField();
+//		metrics.textProperty().addListener(new ChangeListener<String>() {
+//			@Override
+//			public void changed(ObservableValue<? extends String> arg0, String arg1, String arg2) {
+//				if (arg2 != null && !arg2.isEmpty()) {
+//					Artifact resolve = artifact.getRepository().resolve(arg2);
+//					if (resolve instanceof ListableSinkProviderArtifact) {
+//						if (!resolve.equals(artifact.getConfig().getMetricsDatabase())) {
+//							artifact.getConfig().setMetricsDatabase((ListableSinkProviderArtifact) resolve);
+//							MainController.getInstance().setChanged();
+//						}
+//					}
+//				}
+//				else if (artifact.getConfig().getMetricsDatabase() != null) {
+//					artifact.getConfig().setMetricsDatabase(null);
+//					MainController.getInstance().setChanged();
+//				}
+//			}
+//		});
+		
+//		HBox metricsBox = new HBox();
+//		metricsBox.getChildren().addAll(new Label("Metrics Database: "), metrics);
+//		vbox.getChildren().addAll(metricsBox, box, accordion);
 		
 		ScrollPane scroll = new ScrollPane();
 		scroll.setContent(vbox);

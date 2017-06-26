@@ -6,15 +6,16 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-import be.nabu.eai.api.EnvironmentSpecific;
 import be.nabu.eai.repository.api.ListableSinkProviderArtifact;
 import be.nabu.eai.repository.jaxb.ArtifactXMLAdapter;
+import be.nabu.libs.types.api.DefinedType;
 
 @XmlRootElement(name = "webAnalyzer")
 public class WebAnalyzerConfiguration {
 
 	private ListableSinkProviderArtifact metricsDatabase;
 	private List<WebAnalysis> analyses;
+	private DefinedType configurationType;
 	
 	@XmlJavaTypeAdapter(value = ArtifactXMLAdapter.class)
 	public ListableSinkProviderArtifact getMetricsDatabase() {
@@ -24,7 +25,6 @@ public class WebAnalyzerConfiguration {
 		this.metricsDatabase = metricsDatabase;
 	}
 	
-	@EnvironmentSpecific
 	public List<WebAnalysis> getAnalyses() {
 		if (analyses == null) {
 			analyses = new ArrayList<WebAnalysis>();
@@ -35,4 +35,11 @@ public class WebAnalyzerConfiguration {
 		this.analyses = analyses;
 	}
 	
+	@XmlJavaTypeAdapter(value = ArtifactXMLAdapter.class)
+	public DefinedType getConfigurationType() {
+		return configurationType;
+	}
+	public void setConfigurationType(DefinedType configurationType) {
+		this.configurationType = configurationType;
+	}
 }

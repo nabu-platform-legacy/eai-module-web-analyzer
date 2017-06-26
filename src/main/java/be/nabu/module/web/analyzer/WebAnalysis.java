@@ -28,10 +28,4 @@ public class WebAnalysis {
 	public void setTitle(String title) {
 		this.title = title;
 	}
-
-	public enum AnalysisTiming {
-		BEFORE,
-		AFTER,
-		NORMAL
-	}
 }

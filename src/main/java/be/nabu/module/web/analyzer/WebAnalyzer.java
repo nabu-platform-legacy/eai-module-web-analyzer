@@ -13,7 +13,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import be.nabu.eai.module.web.application.WebApplication;
+import be.nabu.eai.module.web.application.WebApplicationMethods;
 import be.nabu.eai.module.web.application.WebFragment;
+import be.nabu.eai.module.web.application.WebFragmentConfiguration;
+import be.nabu.eai.module.web.application.WebFragmentPriority;
 import be.nabu.eai.repository.EAIResourceRepository;
 import be.nabu.eai.repository.api.Repository;
 import be.nabu.eai.repository.artifacts.jaxb.JAXBArtifact;
@@ -36,7 +39,7 @@ import be.nabu.libs.http.glue.GluePostProcessListener;
 import be.nabu.libs.http.glue.GluePreprocessListener;
 import be.nabu.libs.http.server.HTTPServerUtils;
 import be.nabu.libs.resources.api.ResourceContainer;
-import be.nabu.module.web.analyzer.WebAnalysis.AnalysisTiming;
+import be.nabu.libs.types.api.ComplexType;
 
 public class WebAnalyzer extends JAXBArtifact<WebAnalyzerConfiguration> implements WebFragment {
 
@@ -73,13 +76,14 @@ public class WebAnalyzer extends JAXBArtifact<WebAnalyzerConfiguration> implemen
 
 		if (getConfig().getAnalyses() != null && !getConfig().getAnalyses().isEmpty()) {
 			ServiceMethodProvider serviceMethodProvider = new ServiceMethodProvider(getRepository(), getRepository());
+			StaticJavaMethodProvider webApplicationProvider = new StaticJavaMethodProvider(new WebApplicationMethods(artifact));
 			GlueParserProvider parserProvider;
 			if (getConfig().getMetricsDatabase() == null) {
-				parserProvider = new GlueParserProvider(serviceMethodProvider);
+				parserProvider = new GlueParserProvider(serviceMethodProvider, webApplicationProvider);
 			}
 			else {
 				StaticJavaMethodProvider metricsMethodProvider = new StaticJavaMethodProvider(new MetricsMethods(getConfig().getMetricsDatabase(), getId()));
-				parserProvider = new GlueParserProvider(serviceMethodProvider, metricsMethodProvider);
+				parserProvider = new GlueParserProvider(serviceMethodProvider, metricsMethodProvider, webApplicationProvider);
 			}
 			String environmentName = path;
 			if (environmentName.startsWith("/")) {
@@ -94,8 +98,10 @@ public class WebAnalyzer extends JAXBArtifact<WebAnalyzerConfiguration> implemen
 
 			// get a reversed list because we do a promote()
 			// this means the last will actually be the highest ordered
+			// we no longer do a promote but state that we are highest priority web artifacts
+			// this means we can still enjoy such niceties as basic/jwt/... tokens, initial preprocessing etc
 			List<WebAnalysis> analyses = new ArrayList<WebAnalysis>(getConfig().getAnalyses());
-			Collections.reverse(analyses);
+//			Collections.reverse(analyses);
 			for (WebAnalysis analysis : analyses) {
 				if (analysis.getScript() != null && !analysis.getScript().isEmpty()) {
 					try {
@@ -158,9 +164,6 @@ public class WebAnalyzer extends JAXBArtifact<WebAnalyzerConfiguration> implemen
 							}
 						}
 						
-						// always set the subscription at the top
-						subscription.promote();
-						
 						list.add(subscription);
 					}
 					catch (ParseException e) {
@@ -169,6 +172,24 @@ public class WebAnalyzer extends JAXBArtifact<WebAnalyzerConfiguration> implemen
 				}
 			}
 		}
+	}
+	
+	@Override
+	public List<WebFragmentConfiguration> getFragmentConfiguration() {
+		List<WebFragmentConfiguration> configuration = new ArrayList<WebFragmentConfiguration>();
+		if (getConfig().getConfigurationType() != null) {
+			configuration.add(new WebFragmentConfiguration() {
+				@Override
+				public ComplexType getType() {
+					return (ComplexType) getConfig().getConfigurationType();
+				}
+				@Override
+				public String getPath() {
+					return "/";
+				}
+			});
+		}
+		return configuration;
 	}
 
 	@Override
@@ -196,4 +217,9 @@ public class WebAnalyzer extends JAXBArtifact<WebAnalyzerConfiguration> implemen
 		return subscriptions.containsKey(getKey(artifact, path));
 	}
 
+	@Override
+	public WebFragmentPriority getPriority() {
+		return WebFragmentPriority.HIGHEST;
+	}
+	
 }
